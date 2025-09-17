@@ -1,0 +1,1 @@
+API endpoints: register, login, listUsers - demo only
