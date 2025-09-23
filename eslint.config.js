@@ -1,22 +1,22 @@
-import js from '@eslint/js';
-import globals from 'globals';
+import globals from "globals";
 
 export default [
   {
-    ignores: ['eslint.config.js'], // ignore ESLint config itself
-  },
-  {
-    files: ['**/*.js'],
+    files: ["*.js"], // apply to all JS files
     languageOptions: {
-      sourceType: 'commonjs',
       globals: {
-        ...globals.node,
-        ...globals.es2021,
+        ...globals.node,   // Node globals
+        ...globals.browser // Browser globals if needed
       },
+      parserOptions: {
+        ecmaVersion: 2024,
+        sourceType: "module"
+      }
     },
     rules: {
-      'no-unused-vars': ['warn', { args: 'none' }], // ignore unused function parameters
-    },
-  },
-  js.configs.recommended,
+      "no-unused-vars": "warn",
+      "semi": ["error", "always"],
+      // add more rules here
+    }
+  }
 ];

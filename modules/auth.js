@@ -32,22 +32,16 @@ async function authenticateUser(username, password) {
 }
 
 async function listUsers() {
-<<<<<<< HEAD
   return Array.from(users.values()).map((u) => ({
     username: u.username,
     createdAt: u.createdAt,
   }));
 }
 
+// Export all functions
 module.exports = {
   registerUser,
   authenticateUser,
   listUsers,
   validatePassword,
 };
-=======
-  return Array.from(users.values()).map(u => ({ username: u.username, createdAt: u.createdAt }));
-}
-
-module.exports = { registerUser, authenticateUser, listUsers, validatePassword };
->>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27
