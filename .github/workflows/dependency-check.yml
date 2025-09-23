@@ -1,0 +1,44 @@
+name: Daily Dependency & Security Audit
+on:
+  schedule:
+    - cron: '0 2 * * *' # runs daily at 02:00 UTC
+  workflow_dispatch: {} # allows manual start
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Install dependencies
+        run: npm ci
+      - name: Run npm audit (JSON)
+        run: npm audit --json > audit.json || true
+      - name: Create issue if vulnerabilities found
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const t = fs.readFileSync('audit.json', 'utf8');
+            if (!t) {
+              console.log('No audit output');
+              return;
+            }
+            const audit = JSON.parse(t);
+            const metadata = audit.metadata || {};
+            const total = Object.values(metadata.vulnerabilities || {}).reduce((s,n)=>s+n,0);
+            if (total > 0) {
+              await github.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Automated audit found ${total} vulnerabilities`,
+                body: `Automated daily audit detected ${total} vulnerabilities.\n\nRun \`npm audit\` locally and fix if possible.`
+              });
+              throw new Error(`${total} vulnerabilities found`);
+            } else {
+              console.log('No vulnerabilities found.');
+            }
