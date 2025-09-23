@@ -1,2 +1,2 @@
-echo "Feature: user-authentication - added auth helper and login form" >> docs-auth.txt
+echo "Feature: user-authentication - added auth helper and login form" docs-auth.txt
 Feature: user-authentication - added auth helper and login form

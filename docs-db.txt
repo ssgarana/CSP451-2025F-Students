@@ -1,1 +1,1 @@
-echo "Database connection demo: modules/db.js used with db-demo.js" > docs-db.txt
+echo "Database connection demo: modules/db.js used with db-demo.js"  docs-db.txt
