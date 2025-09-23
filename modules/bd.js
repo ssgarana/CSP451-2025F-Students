@@ -15,7 +15,13 @@ function connect(connectionString) {
   });
 }
 
+<<<<<<< HEAD
+function isConnected() {
+  return connected;
+}
+=======
 function isConnected() { return connected; }
+>>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27
 
 async function addUser(userObj) {
   if (!connected) throw new Error('DBNotConnected');
@@ -27,7 +33,11 @@ async function addUser(userObj) {
 
 async function getUserByUsername(username) {
   if (!connected) throw new Error('DBNotConnected');
+<<<<<<< HEAD
+  return store.users.find((u) => u.username === username) || null;
+=======
   return store.users.find(u => u.username === username) || null;
+>>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27
 }
 
 async function listUsers() {
@@ -35,5 +45,16 @@ async function listUsers() {
   return store.users.slice();
 }
 
+<<<<<<< HEAD
+module.exports = {
+  connect,
+  isConnected,
+  addUser,
+  getUserByUsername,
+  listUsers,
+  emitter,
+};
+=======
 module.exports = { connect, isConnected, addUser, getUserByUsername, listUsers, emitter };
 
+>>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27

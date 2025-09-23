@@ -1,5 +1,66 @@
 <!doctype html>
 <html>
+<<<<<<< HEAD
+  <head>
+    <meta charset="utf-8" />
+    <title>Login - Demo</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+      }
+      .box {
+        width: 320px;
+        margin: 80px auto;
+        background: #fff;
+        padding: 18px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      input {
+        width: 90%;
+        padding: 8px;
+        margin: 8px 0;
+      }
+      button {
+        padding: 8px 12px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="box">
+      <h2>Login</h2>
+      <form id="loginForm">
+        <input id="username" placeholder="Username" /><br />
+        <input id="password" placeholder="Password" type="password" /><br />
+        <button type="submit">Login</button>
+      </form>
+      <p id="message"></p>
+    </div>
+
+    <script>
+      // Basic client-side validation for demo
+      document
+        .getElementById('loginForm')
+        .addEventListener('submit', function (e) {
+          e.preventDefault();
+          const u = document.getElementById('username').value.trim();
+          const p = document.getElementById('password').value;
+          if (!u || p.length < 6) {
+            document.getElementById('message').innerText =
+              'Please enter username and password (min 6 chars).';
+            return;
+          }
+          // Fake fetch to /api/login (for real project you'd call backend)
+          document.getElementById('message').innerText = 'Submitted (demo)';
+        });
+    </script>
+  </body>
+=======
 <head>
   <meta charset="utf-8">
   <title>Login - Demo</title>
@@ -36,4 +97,5 @@
     });
   </script>
 </body>
+>>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27
 </html>

@@ -1,6 +1,10 @@
 # Week 1: Introduction to GitHub and Version Control
 
 ## Learning Objectives
+<<<<<<< HEAD
+
+=======
+>>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27
 - Understand the fundamental concepts of version control systems
 - Master basic Git commands and workflows
 - Create and manage GitHub repositories effectively
@@ -9,12 +13,20 @@
 ## Key Concepts
 
 ### Version Control Benefits
+<<<<<<< HEAD
+
+=======
+>>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27
 1. **Change Tracking**: Every modification is recorded with who, what, when, and why
 2. **Collaboration**: Multiple developers can work simultaneously without conflicts
 3. **Backup & Recovery**: Complete history allows reverting to any previous state
 4. **Branching**: Experiment with new features without affecting main code
 
 ## Essential Git Commands
+<<<<<<< HEAD
+
+=======
+>>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27
 ```bash
 # Initialize repository
 git init
@@ -37,6 +49,22 @@ git clone https://github.com/username/repo.git
 ```
 
 ## Markdown Essentials
+<<<<<<< HEAD
+
+```markdown
+# Heading 1
+
+## Heading 2
+
+### Heading 3
+
+**Bold text**
+_Italic text_
+`inline code`
+
+- Bullet point
+
+=======
 ```markdown
 # Heading 1
 ## Heading 2
@@ -47,6 +75,7 @@ git clone https://github.com/username/repo.git
 `inline code`
 
 - Bullet point
+>>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27
 1. Numbered list
 
 [Link text](https://url.com)
@@ -54,6 +83,10 @@ git clone https://github.com/username/repo.git
 ```
 
 ## Assignment Requirements
+<<<<<<< HEAD
+
+=======
+>>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27
 1. Create a GitHub account if you don't have one
 2. Initialize a new repository with meaningful name
 3. Create comprehensive README.md with:

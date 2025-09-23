@@ -1,0 +1,26 @@
+name: Reusable CI Steps
+description: Checkout + setup node + cache + install
+inputs:
+  node-version:
+    description: 'Node.js version'
+    required: false
+    default: '18'
+runs:
+  using: composite
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Cache npm
+      uses: actions/cache@v4
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+
+    - name: Install dependencies
+      run: npm ci

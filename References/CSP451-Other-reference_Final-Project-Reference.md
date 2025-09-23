@@ -88,6 +88,9 @@ chmod +x scripts/setup-venv.sh
 ```
 
 **Expected Output:**
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```
 🚀 Setting up SmartRetail Supplier Sync Python Environment...
 🎉 Virtual environment setup complete!
@@ -104,6 +107,10 @@ az login
 ```
 
 **Expected Output:**
+ HEAD
+
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```
 A web browser has been opened at https://login.microsoftonline.com/...
 Please continue the login in the web browser.
@@ -125,6 +132,9 @@ az group list --output table
 ```
 
 **Expected Output:**
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```
 Name                Location       Status
 ------------------  -------------  ---------
@@ -159,6 +169,9 @@ az storage queue create \
 ```
 
 **Expected Output:**
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```
 Command group 'storage queue' is in preview and under development.
 {
@@ -182,6 +195,9 @@ az functionapp create \
 ```
 
 **Expected Output:**
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```
 Your Linux function app 'smartretail-python-func', that uses a consumption plan has been successfully created
 {
@@ -274,10 +290,17 @@ async def emit_inventory_event(product: Product, correlation_id: str = None):
     if not queue_client:
         print(f'Queue not configured - event would be sent for {product.id}')
         return
+ HEAD
+
+    if correlation_id is None:
+        correlation_id = str(uuid.uuid4())
+
+
     
     if correlation_id is None:
         correlation_id = str(uuid.uuid4())
     
+ f5be490507f9c70989b9301cd5751266c94fdb27
     event = {
         'event_id': str(uuid.uuid4()),
         'correlation_id': correlation_id,
@@ -290,7 +313,9 @@ async def emit_inventory_event(product: Product, correlation_id: str = None):
         'supplier_id': product.supplier_id,
         'suggested_order_quantity': max(STOCK_THRESHOLD * 2 - product.stock_quantity, STOCK_THRESHOLD)
     }
-    
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
     try:
         queue_client.send_message(json.dumps(event))
         print(f'Event emitted: {correlation_id}')
@@ -315,6 +340,16 @@ async def get_product(product_id: str):
 async def update_product_stock(product_id: str, update: ProductUpdate, background_tasks: BackgroundTasks):
     if product_id not in products_db:
         raise HTTPException(status_code=404, detail='Product not found')
+ HEAD
+
+    correlation_id = str(uuid.uuid4())
+    product = products_db[product_id]
+    product.stock_quantity = update.stock_quantity
+
+    if update.stock_quantity < STOCK_THRESHOLD:
+        background_tasks.add_task(emit_inventory_event, product, correlation_id)
+
+
     
     correlation_id = str(uuid.uuid4())
     product = products_db[product_id]
@@ -323,12 +358,27 @@ async def update_product_stock(product_id: str, update: ProductUpdate, backgroun
     if update.stock_quantity < STOCK_THRESHOLD:
         background_tasks.add_task(emit_inventory_event, product, correlation_id)
     
+ f5be490507f9c70989b9301cd5751266c94fdb27
     return product
 
 @app.post('/products/{product_id}/simulate-sale')
 async def simulate_sale(product_id: str, quantity: int = 1, background_tasks: BackgroundTasks = None):
     if product_id not in products_db:
         raise HTTPException(status_code=404, detail='Product not found')
+ HEAD
+
+    product = products_db[product_id]
+    if product.stock_quantity < quantity:
+        raise HTTPException(status_code=400, detail='Insufficient stock')
+
+    correlation_id = str(uuid.uuid4())
+    product.stock_quantity -= quantity
+
+    below_threshold = product.stock_quantity < STOCK_THRESHOLD
+    if below_threshold and background_tasks:
+        background_tasks.add_task(emit_inventory_event, product, correlation_id)
+
+
     
     product = products_db[product_id]
     if product.stock_quantity < quantity:
@@ -341,6 +391,7 @@ async def simulate_sale(product_id: str, quantity: int = 1, background_tasks: Ba
     if below_threshold and background_tasks:
         background_tasks.add_task(emit_inventory_event, product, correlation_id)
     
+ f5be490507f9c70989b9301cd5751266c94fdb27
     return {
         'message': 'Sale completed',
         'product_id': product_id,
@@ -430,21 +481,30 @@ async def root():
 async def process_order(order: OrderRequest, x_correlation_id: str = Header(None, alias='X-Correlation-ID')):
     correlation_id = x_correlation_id or order.correlation_id or str(uuid.uuid4())
     order_id = f'ORD-{datetime.utcnow().strftime("%Y%m%d")}-{str(uuid.uuid4())[:8].upper()}'
-    
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
     product_info = supplier_catalog.get(order.product_id, supplier_catalog['default'])
     unit_cost = product_info['unit_cost']
     total_cost = unit_cost * order.quantity
     delivery_days = product_info['delivery_days']
-    
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
     if order.priority == 'urgent':
         delivery_days = max(1, delivery_days - 1)
         total_cost *= 1.2
     elif order.priority == 'low':
         delivery_days += 2
         total_cost *= 0.95
-    
+ HEAD
+
+    confirmation_number = f'CONF-{str(uuid.uuid4())[:12].upper()}'
+
+   
     confirmation_number = f'CONF-{str(uuid.uuid4())[:12].upper()}'
     
+ f5be490507f9c70989b9301cd5751266c94fdb27
     response = OrderResponse(
         order_id=order_id,
         status='confirmed',
@@ -455,13 +515,20 @@ async def process_order(order: OrderRequest, x_correlation_id: str = Header(None
         processed_at=datetime.utcnow().isoformat(),
         supplier_id=SUPPLIER_ID
     )
+ HEAD
+
+
     
+ f5be490507f9c70989b9301cd5751266c94fdb27
     order_history[order_id] = {
         'request': order.model_dump(),
         'response': response.model_dump(),
         'timestamp': datetime.utcnow().isoformat()
     }
+ HEAD
+
     
+ f5be490507f9c70989b9301cd5751266c94fdb27
     print(f'Order processed: {order_id}, Correlation: {correlation_id}')
     return response
 
@@ -559,6 +626,17 @@ def call_supplier_api(order_request: SupplierOrderRequest, correlation_id: str):
         "Content-Type": "application/json",
         "X-Correlation-ID": correlation_id
     }
+ HEAD
+
+    payload = order_request.model_dump()
+
+    print(f"Calling Supplier API: {url}, Correlation: {correlation_id}")
+
+    for attempt in range(1, RETRY_ATTEMPTS + 1):
+        try:
+            response = requests.post(url, json=payload, headers=headers, timeout=TIMEOUT_SECONDS)
+
+
     
     payload = order_request.model_dump()
     
@@ -568,12 +646,26 @@ def call_supplier_api(order_request: SupplierOrderRequest, correlation_id: str):
         try:
             response = requests.post(url, json=payload, headers=headers, timeout=TIMEOUT_SECONDS)
             
+ f5be490507f9c70989b9301cd5751266c94fdb27
             if response.status_code == 200:
                 response_data = response.json()
                 print(f"Supplier API success: Order {response_data.get('order_id')}")
                 return response_data
             else:
                 print(f"Supplier API failed: {response.status_code}")
+ HEAD
+        except requests.exceptions.RequestException as e:
+            print(f"Supplier API exception: {e}")
+
+        if attempt < RETRY_ATTEMPTS:
+            import time
+            time.sleep(2 ** attempt)
+
+    raise Exception(f"Failed to call Supplier API after {RETRY_ATTEMPTS} attempts")
+
+@app.queue_trigger(
+    arg_name="msg",
+
                 
         except requests.exceptions.RequestException as e:
             print(f"Supplier API exception: {e}")
@@ -586,6 +678,7 @@ def call_supplier_api(order_request: SupplierOrderRequest, correlation_id: str):
 
 @app.queue_trigger(
     arg_name="msg", 
+ f5be490507f9c70989b9301cd5751266c94fdb27
     queue_name="inventory-events",
     connection="AzureWebJobsStorage"
 )
@@ -593,12 +686,21 @@ def inventory_event_processor(msg: func.QueueMessage) -> None:
     try:
         message_body = msg.get_body().decode('utf-8')
         print(f"Processing inventory event: {message_body}")
+ HEAD
+
+        event_data = json.loads(message_body)
+        inventory_event = InventoryEvent(**event_data)
+
+        correlation_id = inventory_event.correlation_id
+
+
         
         event_data = json.loads(message_body)
         inventory_event = InventoryEvent(**event_data)
         
         correlation_id = inventory_event.correlation_id
         
+ f5be490507f9c70989b9301cd5751266c94fdb27
         supplier_order = SupplierOrderRequest(
             product_id=inventory_event.product_id,
             product_name=inventory_event.product_name,
@@ -607,11 +709,19 @@ def inventory_event_processor(msg: func.QueueMessage) -> None:
             priority="urgent" if inventory_event.current_stock <= inventory_event.threshold // 2 else "normal",
             correlation_id=correlation_id
         )
+ HEAD
+
+        supplier_response = call_supplier_api(supplier_order, correlation_id)
+
+        print(f"Event processed successfully: {inventory_event.event_id}, Order: {supplier_response.get('order_id')}")
+
+
         
         supplier_response = call_supplier_api(supplier_order, correlation_id)
         
         print(f"Event processed successfully: {inventory_event.event_id}, Order: {supplier_response.get('order_id')}")
         
+ f5be490507f9c70989b9301cd5751266c94fdb27
     except Exception as e:
         print(f"Function execution failed: {e}")
         raise
@@ -628,7 +738,11 @@ def health_check(req: func.HttpRequest) -> func.HttpResponse:
             "timeout_seconds": TIMEOUT_SECONDS
         }
     }
+ HEAD
+
+
     
+ f5be490507f9c70989b9301cd5751266c94fdb27
     return func.HttpResponse(
         json.dumps(health_status),
         status_code=200,
@@ -650,9 +764,14 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             "supplier_id": "supp-001",
             "suggested_order_quantity": 20
         }
+ HEAD
+
+        inventory_event = InventoryEvent(**test_event)
+
         
         inventory_event = InventoryEvent(**test_event)
-        
+       
+ f5be490507f9c70989b9301cd5751266c94fdb27
         supplier_order = SupplierOrderRequest(
             product_id=inventory_event.product_id,
             product_name=inventory_event.product_name,
@@ -661,9 +780,15 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             priority="normal",
             correlation_id=inventory_event.correlation_id
         )
+ HEAD
+
+        supplier_response = call_supplier_api(supplier_order, inventory_event.correlation_id)
+
+
         
         supplier_response = call_supplier_api(supplier_order, inventory_event.correlation_id)
         
+ f5be490507f9c70989b9301cd5751266c94fdb27
         response_data = {
             "status": "success",
             "message": "Test event processed successfully",
@@ -671,13 +796,20 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             "supplier_response": supplier_response,
             "timestamp": datetime.utcnow().isoformat()
         }
+ HEAD
+
+
         
+ f5be490507f9c70989b9301cd5751266c94fdb27
         return func.HttpResponse(
             json.dumps(response_data),
             status_code=200,
             mimetype="application/json"
         )
+ HEAD
+
         
+ f5be490507f9c70989b9301cd5751266c94fdb27
     except Exception as e:
         error_response = {
             "status": "error",
@@ -685,7 +817,11 @@ def test_function(req: func.HttpRequest) -> func.HttpResponse:
             "error": str(e),
             "timestamp": datetime.utcnow().isoformat()
         }
+ HEAD
+
+
         
+ f5be490507f9c70989b9301cd5751266c94fdb27
         return func.HttpResponse(
             json.dumps(error_response),
             status_code=500,
@@ -703,6 +839,10 @@ cd ..
 ```
 
 **Expected Output:**
+ HEAD
+
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```
 Getting site publishing info...
 Creating archive for current directory...
@@ -765,6 +905,10 @@ curl http://your_vm_ip:8000/
 ```
 
 **Expected Output:**
+ HEAD
+
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```json
 {
   "service": "SmartRetail Backend",
@@ -779,6 +923,10 @@ curl http://your_vm_ip:8001/
 ```
 
 **Expected Output:**
+ HEAD
+
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```json
 {
   "service": "Supplier API",
@@ -794,6 +942,9 @@ curl https://smartretail-python-func.azurewebsites.net/api/health
 ```
 
 **Expected Output:**
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```json
 {
   "service": "Inventory Event Processor",
@@ -822,6 +973,9 @@ curl -s http://your_vm_ip:8000/products | jq '.'
 ```
 
 **Expected Output:**
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```json
 [
   {
@@ -856,6 +1010,9 @@ curl -s -X POST "http://your_vm_ip:8000/products/prod-001/simulate-sale?quantity
 ```
 
 **Expected Output:**
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```json
 {
   "message": "Sale completed",
@@ -875,6 +1032,9 @@ curl -s http://your_vm_ip:8000/queue/status | jq '.'
 ```
 
 **Expected Output:**
+ HEAD
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```json
 {
   "queue_name": "inventory-events",
@@ -890,6 +1050,10 @@ curl -s https://smartretail-python-func.azurewebsites.net/api/test | jq '.'
 ```
 
 **Expected Output:**
+ HEAD
+
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```json
 {
   "status": "success",
@@ -928,6 +1092,8 @@ curl -s http://your_vm_ip:8001/orders | jq '.'
 ```
 
 **Expected Output:**
+ HEAD
+ f5be490507f9c70989b9301cd5751266c94fdb27
 ```json
 {
   "orders": [
@@ -1049,6 +1215,10 @@ curl -s http://your_vm_ip:8001/orders | jq '.total_count'
 ### Correlation ID Tracing
 
 Every operation generates a unique correlation ID that flows through:
+ HEAD
+
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 1. **Backend**: Generated during sale simulation
 2. **Queue Message**: Included in event payload
 3. **Azure Function**: Extracted and logged
@@ -1067,9 +1237,16 @@ The SmartRetail Supplier Sync system demonstrates:
 ✅ **Microservices Design** - Independent, focused services  
 ✅ **Observability** - Correlation ID tracing and structured logging  
 ✅ **Resilience** - Retry logic and error handling  
+ HEAD
+✅ **Cloud Integration** - Native Azure services for scalability
+
+The system is production-ready for demonstration and can be extended with:
+
+
 ✅ **Cloud Integration** - Native Azure services for scalability  
 
 The system is production-ready for demonstration and can be extended with:
+ f5be490507f9c70989b9301cd5751266c94fdb27
 - Authentication and authorization
 - Database persistence
 - Multiple supplier integrations
@@ -1081,11 +1258,21 @@ The system is production-ready for demonstration and can be extended with:
 ## Quick Reference
 
 ### Service URLs
+ HEAD
+
+- **Backend API**: http://your_vm_ip:8000
+- **Supplier API**: http://your_vm_ip:8001
+- **Azure Function**: https://smartretail-python-func.azurewebsites.net
+
+### Key Demo Commands
+
+
 - **Backend API**: http://your_vm_ip:8000
 - **Supplier API**: http://your_vm_ip:8001  
 - **Azure Function**: https://smartretail-python-func.azurewebsites.net
 
 ### Key Demo Commands
+>>>>>>> f5be490507f9c70989b9301cd5751266c94fdb27
 ```bash
 # Health check all services
 curl http://your_vm_ip:8000/ && curl http://your_vm_ip:8001/ && curl https://smartretail-python-func.azurewebsites.net/api/health
@@ -1098,6 +1285,10 @@ curl http://your_vm_ip:8000/queue/status && curl http://your_vm_ip:8001/orders
 ```
 
 ### Azure Portal Links
+ HEAD
+
+
+ f5be490507f9c70989b9301cd5751266c94fdb27
 - **Function App**: Search "smartretail-python-func"
 - **Storage Account**: Search "smartretailsa"
 - **Resource Group**: "Student-RG-1725868"
